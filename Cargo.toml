@@ -1,0 +1,48 @@
+# Title: Miniforge App Foundation
+# Subtitle: the public seam — domain-neutral app envelope, data-plane router, workbench contract
+# Author: Christopher Lester
+# Copyright 2025-2026 Christopher Lester (christopher@miniforge.ai)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+[workspace]
+members = [
+    "crates/app-foundation-contracts",
+    "crates/app-foundation-data-plane",
+    "crates/workbench-contract",
+]
+resolver = "2"
+
+[workspace.package]
+edition = "2024"
+license = "Apache-2.0"
+version = "0.1.0"
+authors = ["Christopher Lester <christopher@miniforge.ai>"]
+repository = "https://github.com/miniforge-ai/miniforge-app-foundation"
+
+# Centralized per miniforge-standards languages/rust (230).
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+all = "deny"
+
+[workspace.dependencies]
+async-trait = "0.1"
+axum = "0.7"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "1"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "net"] }
+tower = { version = "0.4", features = ["util"] }
+miniforge-app-foundation-contracts = { path = "crates/app-foundation-contracts" }

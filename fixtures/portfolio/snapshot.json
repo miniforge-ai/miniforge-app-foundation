@@ -1,0 +1,73 @@
+{
+  "schema_version": "workbench_snapshot/v1",
+  "snapshot_id": "wb-portfolio-sample-0001",
+  "generated_at": "2026-06-06T00:00:00Z",
+  "product": "portfolio",
+  "run_id": "run-sample-0001",
+  "registry_ref": { "registry_id": "portfolio-state-vars", "version": "2026.06.06.1" },
+  "source_hashes": ["sha256:0000000000000000000000000000000000000000000000000000000000000000"],
+  "evaluations": [
+    {
+      "state_var_id": "portfolio.lens.validation_readiness",
+      "product": "portfolio",
+      "status": "pass",
+      "value": "ready",
+      "score": 0.92,
+      "confidence": 0.9,
+      "score_components": {
+        "date_count": 1.0,
+        "subject_count": 1.0,
+        "horizon_sample": 0.84,
+        "regime_slice_sample": 0.8
+      },
+      "evidence_refs": [
+        {
+          "id": "ev-sample-0001",
+          "source_role": "lens-validation-readiness",
+          "quote": "synthetic example: readiness sample sizes above configured minimums"
+        }
+      ],
+      "findings": [],
+      "gate_effect": "none",
+      "evaluated_at": "2026-06-06T00:00:00Z"
+    },
+    {
+      "state_var_id": "portfolio.signal.quality_scored",
+      "product": "portfolio",
+      "status": "warn",
+      "value": 0.71,
+      "score": 0.71,
+      "confidence": 0.74,
+      "score_components": {
+        "spearman_posture_return": 0.7,
+        "defensive_efficiency": 0.76,
+        "defensive_false_positive_rate": 0.68
+      },
+      "evidence_refs": [
+        {
+          "id": "ev-sample-0002",
+          "source_role": "signal-quality",
+          "quote": "synthetic example: defensive sample below preferred coverage"
+        }
+      ],
+      "findings": [
+        { "severity": "warn", "message": "synthetic example: regime coverage thin for defensive posture" }
+      ],
+      "gate_effect": "marks_low_confidence",
+      "evaluated_at": "2026-06-06T00:00:00Z"
+    }
+  ],
+  "entities": {
+    "portfolio.market_state": {
+      "overall_risk": 0.42,
+      "regime": { "score": 0.55, "status": "YELLOW", "interpretation": "synthetic example regime read" },
+      "concentration": { "risk": false, "triggered_clusters": [], "high_risk_families": [] },
+      "posture": { "posture": "neutral", "reason": ["synthetic example"], "confidence_level": "MEDIUM", "confidence_score": 0.6 }
+    }
+  },
+  "signature": {
+    "algorithm": "sha256",
+    "digest": "0000000000000000000000000000000000000000000000000000000000000000",
+    "canonicalization": "json-c14n/1"
+  }
+}

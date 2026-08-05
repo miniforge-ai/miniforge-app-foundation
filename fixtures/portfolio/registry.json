@@ -1,0 +1,111 @@
+{
+  "schema_version": "state_var_registry/v1",
+  "registry_id": "portfolio-state-vars",
+  "version": "2026.06.06.1",
+  "product": "portfolio",
+  "state_vars": [
+    {
+      "id": "portfolio.lens.validation_readiness",
+      "version": "0.1.0",
+      "product": "portfolio",
+      "area": "lens",
+      "kind": "sufficiency",
+      "description": "A signal lens has enough dates, subjects, horizon sample, and regime-slice sample to be scored rather than marked insufficient.",
+      "value_type": "enum",
+      "thresholds": {
+        "pass": 0.85,
+        "warn": 0.65
+      },
+      "evidence_requirements": {
+        "required_refs": [
+          "LensValidationReadiness"
+        ],
+        "min_count": 1,
+        "must_include_source_role": true
+      },
+      "score_components": [
+        "date_count",
+        "subject_count",
+        "horizon_sample",
+        "regime_slice_sample"
+      ],
+      "gate_effects": {
+        "pass": "none",
+        "warn": "marks_low_confidence",
+        "fail": "marks_insufficient",
+        "blocked": "requires_reingest"
+      },
+      "lifecycle": "draft",
+      "owner": "portfolio",
+      "notes": "Whether the lens has enough validated history to score: date count, subject count, and horizon sample all above their configured minimums."
+    },
+    {
+      "id": "portfolio.signal.quality_scored",
+      "version": "0.1.0",
+      "product": "portfolio",
+      "area": "signal",
+      "kind": "quality",
+      "description": "Signal quality is scored (not insufficient-sample / insufficient-regime-coverage) and clears metric acceptance.",
+      "value_type": "number",
+      "thresholds": {
+        "pass": 0.85,
+        "warn": 0.65
+      },
+      "evidence_requirements": {
+        "required_refs": [
+          "SignalQualityRecord"
+        ],
+        "min_count": 1,
+        "must_include_source_role": true
+      },
+      "score_components": [
+        "spearman_posture_return",
+        "defensive_efficiency",
+        "defensive_false_positive_rate"
+      ],
+      "gate_effects": {
+        "pass": "none",
+        "warn": "marks_low_confidence",
+        "fail": "marks_insufficient",
+        "blocked": "requires_reingest"
+      },
+      "lifecycle": "draft",
+      "owner": "portfolio",
+      "notes": "Whether every signal carries an acceptance status from the quality pass."
+    },
+    {
+      "id": "portfolio.data.fidelity_gate",
+      "version": "0.1.0",
+      "product": "portfolio",
+      "area": "data",
+      "kind": "integrity",
+      "description": "Input data fidelity stays within bounds: missing inputs, fallback methods, and dropped observations under policy ceilings.",
+      "value_type": "boolean",
+      "thresholds": {
+        "pass": 0.85,
+        "warn": 0.65
+      },
+      "evidence_requirements": {
+        "required_refs": [
+          "SourceProvenance"
+        ],
+        "min_count": 1,
+        "must_include_hash": true
+      },
+      "score_components": [
+        "missing_input_pct",
+        "fallback_method_pct",
+        "dropped_observation_pct"
+      ],
+      "gate_effects": {
+        "pass": "none",
+        "warn": "marks_low_confidence",
+        "fail": "requires_review",
+        "blocked": "requires_reingest"
+      },
+      "lifecycle": "draft",
+      "owner": "portfolio",
+      "notes": "Whether missing inputs, fallback methods, and dropped observations all stay under their configured ceilings."
+    }
+  ]
+}

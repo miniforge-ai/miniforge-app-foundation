@@ -1,0 +1,148 @@
+{
+  "schema_version": "state_var_registry/v1",
+  "registry_id": "career-state-vars",
+  "version": "2026.06.06.1",
+  "product": "career",
+  "state_vars": [
+    {
+      "id": "career.lens.report_grounded",
+      "version": "0.1.0",
+      "product": "career",
+      "area": "lens",
+      "kind": "quality",
+      "description": "Every lens verdict in the report carries a common-envelope projection backed by portfolio claim evidence rather than ungrounded assertion.",
+      "value_type": "number",
+      "thresholds": {
+        "pass": 0.85,
+        "warn": 0.65
+      },
+      "evidence_requirements": {
+        "required_refs": [
+          "LensVerdict",
+          "Claim"
+        ],
+        "min_count": 1,
+        "must_include_source_role": true
+      },
+      "score_components": [
+        "verdict_envelope_coverage",
+        "evidence_confidence",
+        "ungrounded_verdict_rate"
+      ],
+      "gate_effects": {
+        "pass": "none",
+        "warn": "marks_low_confidence",
+        "fail": "requires_repair",
+        "blocked": "requires_reingest"
+      },
+      "lifecycle": "draft",
+      "owner": "career",
+      "notes": "Share of the report's verdicts that carry an evidence-confidence envelope above the grounding floor."
+    },
+    {
+      "id": "career.lens.evidence_sufficiency",
+      "version": "0.1.0",
+      "product": "career",
+      "area": "lens",
+      "kind": "sufficiency",
+      "description": "Evidence is sufficient \u2014 not merely present \u2014 for each scored projection's must/should clauses.",
+      "value_type": "number",
+      "thresholds": {
+        "pass": 0.85,
+        "warn": 0.65
+      },
+      "evidence_requirements": {
+        "required_refs": [
+          "LensVerdict"
+        ],
+        "min_count": 1,
+        "must_include_source_role": true
+      },
+      "score_components": [
+        "must_clause_coverage",
+        "should_confidence",
+        "strong_should_floor"
+      ],
+      "gate_effects": {
+        "pass": "none",
+        "warn": "marks_low_confidence",
+        "fail": "requires_review",
+        "blocked": "requires_reingest"
+      },
+      "lifecycle": "draft",
+      "owner": "career",
+      "notes": "Whether each scored dimension cites enough evidence to clear the lens policy's sufficiency floor."
+    },
+    {
+      "id": "career.claim.evidence_traceability",
+      "version": "0.1.0",
+      "product": "career",
+      "area": "claim",
+      "kind": "integrity",
+      "description": "Each portfolio claim traces to evidence refs with a source and grounding score above the configured floor.",
+      "value_type": "number",
+      "thresholds": {
+        "pass": 0.85,
+        "warn": 0.65
+      },
+      "evidence_requirements": {
+        "required_refs": [
+          "Claim",
+          "EvidenceRef"
+        ],
+        "min_count": 1,
+        "must_include_source_role": true
+      },
+      "score_components": [
+        "grounding_score",
+        "evidence_presence",
+        "confidential_leak_absence"
+      ],
+      "gate_effects": {
+        "pass": "none",
+        "warn": "marks_low_confidence",
+        "fail": "requires_repair",
+        "blocked": "requires_reingest"
+      },
+      "lifecycle": "draft",
+      "owner": "career",
+      "notes": "Share of claims whose grounding score traces to at least one cited evidence item."
+    },
+    {
+      "id": "career.oracle.reproduction_delta",
+      "version": "0.1.0",
+      "product": "career",
+      "area": "oracle",
+      "kind": "regression",
+      "description": "A generated growth report reproduces the canonical oracle: current/target status agree and evidence overlaps, row by row.",
+      "value_type": "number",
+      "thresholds": {
+        "pass": 0.85,
+        "warn": 0.65
+      },
+      "evidence_requirements": {
+        "required_refs": [
+          "GrowthReport",
+          "Oracle"
+        ],
+        "min_count": 1
+      },
+      "score_components": [
+        "both_status_match_rate",
+        "current_status_match_rate",
+        "target_status_match_rate",
+        "coverage",
+        "evidence_overlap"
+      ],
+      "gate_effects": {
+        "pass": "none",
+        "warn": "marks_low_confidence",
+        "fail": "requires_review",
+        "blocked": "requires_reingest"
+      },
+      "lifecycle": "draft",
+      "owner": "career",
+      "notes": "Agreement between a re-run and its recorded oracle: status-match rate, evidence overlap, and rows present in one run but not the other."
+    }
+  ]
+}
