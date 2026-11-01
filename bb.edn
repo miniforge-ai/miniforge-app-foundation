@@ -15,8 +15,13 @@
 ;; See the License for the specific language governing permissions and
 ;; limitations under the License.
 {:tasks
- {pre-commit
-  {:doc "Pre-commit gate: cargo fmt + clippy (deny warnings) + tests. Run by .githooks/pre-commit; never bypass. Mirrors CI exactly — this repo has no private dependency, so the two cannot diverge."
+ {test:clojure
+  {:doc "Validate every golden fixture against the Clojure Malli mirror in bindings/clojure."
+   :task (shell {:dir "bindings/clojure"} "bb test")}
+
+  pre-commit
+  {:doc "Pre-commit gate: cargo fmt + clippy (deny warnings) + tests, then the Clojure binding tests. Run by .githooks/pre-commit; never bypass. Mirrors CI exactly — this repo has no private dependency, so the two cannot diverge."
+   :depends [test:clojure]
    :task (do (shell "cargo fmt --all --check")
              (shell "cargo clippy --workspace --all-targets --all-features -- -D warnings")
              (shell "cargo test --workspace --all-targets"))}}}
