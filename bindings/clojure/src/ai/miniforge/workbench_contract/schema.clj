@@ -29,7 +29,8 @@
 
    Field rules follow serde. An Option<T> field may be omitted or null.
    A #[serde(default)] field may be omitted but not null. Unsigned
-   integers carry their Rust bounds. bindings/parity_cases.json holds
+   integers carry their Rust bounds, and f64 fields take finite numbers
+   only. bindings/parity_cases.json holds
    the edge cases; the Rust and Clojure suites both run it.")
 
 ;; ---------------------------------------------------------------- enums
@@ -75,6 +76,21 @@
 (def U64
   [:and integer? [:>= 0] [:<= u64-max]])
 
+;; ---------------------------------------------------------------- floats
+;;
+;; NaN and the infinities have no JSON encoding, and a number outside
+;; the finite f64 range overflows to one, so Rust's f64 fields reject
+;; them all. (double x) maps an out-of-range BigInt or BigDecimal to an
+;; infinity, so one check covers both.
+
+(defn finite-f64?
+  "True when `x` is a number that encodes as a finite f64."
+  [x]
+  (and (number? x) (Double/isFinite (double x))))
+
+(def F64
+  [:fn {:error/message "should be a finite number"} finite-f64?])
+
 ;; ---------------------------------------------------------------- evidence
 
 (def EvidenceSpan
@@ -112,7 +128,7 @@
    [:kind StateVarKind]
    [:description :string]
    [:value_type ValueType]
-   [:thresholds {:optional true} [:map-of :keyword number?]]
+   [:thresholds {:optional true} [:map-of :keyword F64]]
    [:evidence_requirements EvidenceRequirements]
    [:score_components [:sequential :string]]
    [:gate_effects [:map-of :keyword :string]]
@@ -147,11 +163,11 @@
    [:product :string]
    [:status StateStatus]
    [:value {:optional true} any?]
-   [:score number?]
-   [:confidence number?]
+   [:score F64]
+   [:confidence F64]
    ;; Dynamic-map keys keywordize on JSON parse, same as fixed keys, so
    ;; they validate as :keyword; only enum/string VALUES stay strings.
-   [:score_components {:optional true} [:maybe [:map-of :keyword number?]]]
+   [:score_components {:optional true} [:maybe [:map-of :keyword F64]]]
    [:evidence_refs [:sequential EvidenceRef]]
    [:findings [:sequential Finding]]
    [:gate_effect :string]

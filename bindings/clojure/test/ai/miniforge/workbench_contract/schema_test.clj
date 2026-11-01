@@ -110,3 +110,27 @@
           (is (some? schema) (str "unknown case type " type))
           (is (= valid (m/validate schema doc))
               (explain schema doc)))))))
+
+(deftest mirror-rejects-numbers-rust-f64-cannot-decode-test
+  ;; These cannot appear in parity_cases.json: JSON has no NaN or
+  ;; infinity, and serde_json refuses 1e400 before the table loads.
+  (let [snapshot (read-json (io/file fixtures-dir "miniforge" "snapshot.json"))
+        registry (read-json (io/file fixtures-dir "miniforge" "registry.json"))
+        beyond-f64 (bigint (BigDecimal. "1e400"))]
+    (testing "finite numbers pass, integer or not"
+      (is (sut/finite-f64? 1))
+      (is (sut/finite-f64? 0.5))
+      (is (sut/finite-f64? Long/MAX_VALUE)))
+    (testing "non-finite and out-of-range values fail"
+      (doseq [bad [Double/NaN Double/POSITIVE_INFINITY Double/NEGATIVE_INFINITY beyond-f64]]
+        (is (not (sut/finite-f64? bad)) (pr-str bad))))
+    (testing "each f64 field applies the check"
+      (is (not (m/validate sut/WorkbenchSnapshot
+                           (assoc-in snapshot [:evaluations 0 :score] Double/NaN))))
+      (is (not (m/validate sut/WorkbenchSnapshot
+                           (assoc-in snapshot [:evaluations 0 :confidence] Double/POSITIVE_INFINITY))))
+      (is (not (m/validate sut/WorkbenchSnapshot
+                           (assoc-in snapshot [:evaluations 0 :score_components :x] beyond-f64))))
+      (is (not (m/validate sut/StateVarRegistry
+                           (assoc-in registry [:state_vars 0 :thresholds :x] Double/NEGATIVE_INFINITY)))))))
+

@@ -26,7 +26,8 @@ with no credentials.
    with field rules corrected to match serde. An `Option<T>` field may be omitted
    or null. A `#[serde(default)]` field (`thresholds`, `consumes`, `entities`,
    `axes`) may be omitted but not null. `u32` and `u64` fields carry their Rust
-   bounds, and arrays accept any sequential collection.
+   bounds, `f64` fields take finite numbers only, and arrays accept any
+   sequential collection.
 2. `bindings/clojure/deps.edn`: `{:paths ["src"]}` plus Malli 0.17.0, the version
    the mirror was already published with.
 3. `bindings/clojure/test/.../schema_test.clj`: every registry and snapshot under
