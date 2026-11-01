@@ -7,7 +7,7 @@
 # Miniforge App Foundation
 
 The public seam every Miniforge app and every workbench tenant depends on. Three
-small crates, no domain logic, no product coupling — this repository exists so
+small crates, no domain logic, no product coupling. This repository exists so
 that an adapter can be written against a stable set of types without pulling in
 an application.
 
@@ -55,10 +55,10 @@ Two things define the shape you must produce:
    definition; Swift and Clojure consumers mirror them, never the reverse.
 2. **The golden fixtures** under `fixtures/<tenant>/`. Each is a registry plus a
    snapshot that round-trips through the Rust types, and they are checked by this
-   repository's test suite. Three tenants are included — `career`, `portfolio`,
-   `miniforge` — deliberately unalike, because the contract's whole claim is that
-   a wildly different product projects into the same snapshot with no contract
-   change.
+   repository's test suite. Three tenants are included: `career`, `portfolio`,
+   and `miniforge`. They are deliberately unalike, because the contract claims
+   that an unrelated product projects into the same snapshot with no
+   contract change.
 
 Read `fixtures/miniforge/` first if you want the plainest example.
 
@@ -100,14 +100,26 @@ metadata worth serving without the body.
 ## Other language bindings
 
 Rust is canonical. `bindings/swift/` documents the codegen route for the Swift
-shell. A Clojure Malli mirror of the wire shape exists and has not yet moved into
-this repository; until it does, an adapter in another language should validate
-against the golden fixtures.
+shell. `bindings/clojure/` is a Malli mirror of the wire shape
+(`ai.miniforge.workbench-contract.schema`) for Clojure adapters to validate at
+their emit boundary. Its tests validate every golden fixture against the mirror,
+so a drift between the Rust types and the mirror fails CI. Depend on it as a git
+lib:
+
+```clojure
+io.github.miniforge-ai/miniforge-app-foundation
+{:git/url "https://github.com/miniforge-ai/miniforge-app-foundation.git"
+ :git/sha "<sha>"
+ :deps/root "bindings/clojure"}
+```
+
+An adapter in any other language should validate against the golden fixtures.
 
 ## Build
 
 ```bash
 cargo test --workspace --all-targets
+bb test:clojure     # Clojure binding: fixtures validate against the Malli mirror
 ```
 
 No credentials, no submodule, no private dependency. That is the point of this
@@ -118,6 +130,8 @@ built by anyone.
 
 - [Minibench](https://github.com/miniforge-ai/minibench) — the workbench app
   shell: hosts, validates, compares, and renders the snapshots adapters emit.
+- [Miniforge](https://github.com/miniforge-ai/miniforge) — its workbench
+  adapters validate their snapshots with the Clojure binding.
 
 ## License
 

@@ -25,23 +25,25 @@ belongs in that product's adapter.
 
 This is also why it is Apache-2.0 and public while several of its consumers are
 proprietary and private. That direction is fine and deliberate — closed products
-may depend on an open seam. The reverse must never happen: no private repo's
-name, source path, namespace, or policy constant belongs in this repository,
-including in fixture `notes` and `owner` fields.
+may depend on an open seam. The reverse must never happen. No private repo's
+name, source path, namespace, or policy constant belongs in this repository.
+That includes fixture `notes` and `owner` fields.
 
 ## Compatibility
 
 The types here are a published wire contract with consumers outside this
 organisation. Adding an optional field is cheap; changing or removing one is
 not. A breaking change needs a new `*_V2` alongside the old, not an edit in
-place, and the `*_V1` schema-version constants are pinned by tests so a typo
-surfaces as a failure rather than silent wire drift.
+place. Tests pin the `*_V1` schema-version constants, so a typo fails a test
+instead of drifting the wire silently.
 
 ## Fixtures are the contract test
 
-`fixtures/<tenant>/` holds a registry and a snapshot per tenant, round-tripped
-through the Rust types by the test suite. They are also the reference an adapter
-author reads. Three deliberately unalike tenants are included because the
+`fixtures/<tenant>/` holds a registry and a snapshot per tenant. The test suite
+round-trips them through the Rust types, and `bb test:clojure` validates them
+against the Clojure Malli mirror in `bindings/clojure/`. A field added to the Rust types
+is added to the mirror in the same change. The fixtures are also the reference an
+adapter author reads. Three deliberately unalike tenants are included because the
 contract's claim is neutrality — if a change makes one tenant's fixture
 awkward, the change is probably wrong.
 

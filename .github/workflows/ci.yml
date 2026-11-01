@@ -46,3 +46,32 @@ jobs:
 
       - name: Test
         run: cargo test --workspace --all-targets
+
+  clojure-binding:
+    name: clojure binding
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install Babashka
+        uses: DeLaGuardo/setup-clojure@12.5
+        with:
+          bb: "1.13.229"
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('bindings/clojure/deps.edn') }}
+          restore-keys: ${{ runner.os }}-m2-
+
+      - name: Fixtures validate against the Malli mirror
+        run: bb test:clojure
