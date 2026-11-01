@@ -42,7 +42,9 @@ instead of drifting the wire silently.
 `fixtures/<tenant>/` holds a registry and a snapshot per tenant. The test suite
 round-trips them through the Rust types, and `bb test:clojure` validates them
 against the Clojure Malli mirror in `bindings/clojure/`. A field added to the Rust types
-is added to the mirror in the same change. The fixtures are also the reference an
+is added to the mirror in the same change. Edge cases the two must decide the same
+way (nulls, omitted defaults, integer bounds) go in `bindings/parity_cases.json`,
+which both suites run. The fixtures are also the reference an
 adapter author reads. Three deliberately unalike tenants are included because the
 contract's claim is neutrality — if a change makes one tenant's fixture
 awkward, the change is probably wrong.

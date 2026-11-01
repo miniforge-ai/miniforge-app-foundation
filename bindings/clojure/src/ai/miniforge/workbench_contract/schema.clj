@@ -25,7 +25,12 @@
    are unqualified snake_case keywords (:snapshot_id, :state_var_id),
    matching the wire field names. The golden fixtures under
    fixtures/<tenant>/ are the source of truth both this mirror and the
-   Rust types must round-trip — keep them in lock-step.")
+   Rust types must round-trip — keep them in lock-step.
+
+   Field rules follow serde. An Option<T> field may be omitted or null.
+   A #[serde(default)] field may be omitted but not null. Unsigned
+   integers carry their Rust bounds. bindings/parity_cases.json holds
+   the edge cases; the Rust and Clojure suites both run it.")
 
 ;; ---------------------------------------------------------------- enums
 ;;
@@ -50,33 +55,53 @@
 (def ViewTier
   [:enum "generic" "primitive" "bespoke"])
 
+;; ---------------------------------------------------------------- integers
+;;
+;; JSON integers past Long/MAX_VALUE parse as BigInt, so the u64 bound
+;; is checked with integer? rather than int?. A float such as 2.0 is
+;; not an integer here, and serde rejects it for an integer field too.
+
+(def u32-max
+  "Largest value of a Rust u32."
+  4294967295)
+
+(def u64-max
+  "Largest value of a Rust u64."
+  18446744073709551615N)
+
+(def U32
+  [:and integer? [:>= 0] [:<= u32-max]])
+
+(def U64
+  [:and integer? [:>= 0] [:<= u64-max]])
+
 ;; ---------------------------------------------------------------- evidence
 
 (def EvidenceSpan
   [:map {:closed false}
-   [:start {:optional true} nat-int?]
-   [:end {:optional true} nat-int?]])
+   [:start {:optional true} [:maybe U64]]
+   [:end {:optional true} [:maybe U64]]])
 
 (def EvidenceRef
   [:map {:closed false}
    [:id :string]
    [:source_role :string]
-   [:artifact_id {:optional true} :string]
-   [:span {:optional true} EvidenceSpan]
-   [:quote {:optional true} :string]
-   [:hash {:optional true} :string]
-   [:trust_level {:optional true} :string]
-   [:created_at {:optional true} :string]])
+   [:artifact_id {:optional true} [:maybe :string]]
+   [:span {:optional true} [:maybe EvidenceSpan]]
+   [:quote {:optional true} [:maybe :string]]
+   [:hash {:optional true} [:maybe :string]]
+   [:trust_level {:optional true} [:maybe :string]]
+   [:created_at {:optional true} [:maybe :string]]])
 
 ;; ---------------------------------------------------------------- registry
 
 (def EvidenceRequirements
   [:map {:closed false}
-   [:required_refs [:vector :string]]
-   [:min_count {:optional true} nat-int?]
-   [:must_include_hash {:optional true} :boolean]
-   [:must_include_source_role {:optional true} :boolean]
-   [:freshness_sla_hours {:optional true} nat-int?]])
+   [:required_refs [:sequential :string]]
+   [:min_count {:optional true} [:maybe U32]]
+   [:must_include_hash {:optional true} [:maybe :boolean]]
+   [:must_include_source_role {:optional true} [:maybe :boolean]]
+   [:freshness_sla_hours {:optional true} [:maybe U64]]])
 
 (def StateVariable
   [:map {:closed false}
@@ -87,13 +112,13 @@
    [:kind StateVarKind]
    [:description :string]
    [:value_type ValueType]
-   [:thresholds [:map-of :keyword number?]]
+   [:thresholds {:optional true} [:map-of :keyword number?]]
    [:evidence_requirements EvidenceRequirements]
-   [:score_components [:vector :string]]
+   [:score_components [:sequential :string]]
    [:gate_effects [:map-of :keyword :string]]
    [:lifecycle Lifecycle]
-   [:owner {:optional true} :string]
-   [:notes {:optional true} :string]])
+   [:owner {:optional true} [:maybe :string]]
+   [:notes {:optional true} [:maybe :string]]])
 
 (def StateVarRegistry
   [:map {:closed false}
@@ -101,7 +126,7 @@
    [:registry_id :string]
    [:version :string]
    [:product :string]
-   [:state_vars [:vector StateVariable]]])
+   [:state_vars [:sequential StateVariable]]])
 
 (def RegistryRef
   [:map {:closed false}
@@ -112,7 +137,7 @@
 
 (def Finding
   [:map {:closed false}
-   [:severity {:optional true} :string]
+   [:severity {:optional true} [:maybe :string]]
    [:message :string]
    [:data {:optional true} any?]])
 
@@ -126,9 +151,9 @@
    [:confidence number?]
    ;; Dynamic-map keys keywordize on JSON parse, same as fixed keys, so
    ;; they validate as :keyword; only enum/string VALUES stay strings.
-   [:score_components {:optional true} [:map-of :keyword number?]]
-   [:evidence_refs [:vector EvidenceRef]]
-   [:findings [:vector Finding]]
+   [:score_components {:optional true} [:maybe [:map-of :keyword number?]]]
+   [:evidence_refs [:sequential EvidenceRef]]
+   [:findings [:sequential Finding]]
    [:gate_effect :string]
    [:regression {:optional true} any?]
    [:evaluated_at :string]])
@@ -140,7 +165,7 @@
    [:id :string]
    [:product :string]
    [:tier ViewTier]
-   [:consumes [:vector :string]]
+   [:consumes {:optional true} [:sequential :string]]
    [:title :string]])
 
 ;; ---------------------------------------------------------------- run variant
@@ -148,16 +173,16 @@
 (def VariantRef
   [:map {:closed false}
    [:id :string]
-   [:version {:optional true} :string]])
+   [:version {:optional true} [:maybe :string]]])
 
 (def RunVariant
   [:map {:closed false}
    [:experiment_id :string]
    [:label :string]
-   [:workflow {:optional true} VariantRef]
-   [:prompt {:optional true} VariantRef]
-   [:model {:optional true} :string]
-   [:method {:optional true} :string]
+   [:workflow {:optional true} [:maybe VariantRef]]
+   [:prompt {:optional true} [:maybe VariantRef]]
+   [:model {:optional true} [:maybe :string]]
+   [:method {:optional true} [:maybe :string]]
    [:axes {:optional true} [:map-of :keyword :string]]])
 
 ;; ---------------------------------------------------------------- snapshot
@@ -176,11 +201,11 @@
    [:generated_at :string]
    [:product :string]
    [:run_id :string]
-   [:variant {:optional true} RunVariant]
+   [:variant {:optional true} [:maybe RunVariant]]
    [:registry_ref RegistryRef]
-   [:source_hashes {:optional true} [:vector :string]]
-   [:evaluations [:vector StateEvaluation]]
-   [:entities [:map-of :keyword any?]]
+   [:source_hashes {:optional true} [:maybe [:sequential :string]]]
+   [:evaluations [:sequential StateEvaluation]]
+   [:entities {:optional true} [:map-of :keyword any?]]
    [:metadata {:optional true} any?]
    [:signature SnapshotSignature]])
 

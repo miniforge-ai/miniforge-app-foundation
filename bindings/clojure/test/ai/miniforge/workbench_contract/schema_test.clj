@@ -23,6 +23,7 @@
    [ai.miniforge.workbench-contract.schema :as sut]
    [cheshire.core :as json]
    [clojure.java.io :as io]
+   [clojure.string :as str]
    [clojure.test :refer [deftest is testing]]
    [malli.core :as m]
    [malli.error :as me]))
@@ -31,6 +32,16 @@
   "The repository's fixtures, relative to bindings/clojure (the test task's
    working directory)."
   (io/file "../../fixtures"))
+
+(def parity-cases-file
+  "Edge cases the Rust suite also runs (crates/workbench-contract/tests/parity.rs)."
+  (io/file "../parity_cases.json"))
+
+(def case-schemas
+  "The mirror schema each parity case type validates against."
+  {"registry" sut/StateVarRegistry
+   "snapshot" sut/WorkbenchSnapshot
+   "view_plugin" sut/ViewPlugin})
 
 (defn- tenant-dirs
   []
@@ -45,6 +56,30 @@
 (defn- explain
   [schema value]
   (pr-str (me/humanize (m/explain schema value))))
+
+(defn- pointer-path
+  "The get-in path in `doc` for a JSON pointer: numeric segments index
+   vectors, other segments are keyword map keys."
+  [doc pointer]
+  (:path (reduce (fn [{:keys [node path]} segment]
+                   (let [k (if (sequential? node) (parse-long segment) (keyword segment))]
+                     {:node (get node k) :path (conj path k)}))
+                 {:node doc :path []}
+                 (rest (str/split pointer #"/")))))
+
+(defn- case-document
+  "The case's inline `document`, or its base fixture with the value at
+   `pointer` set (when the case has `set`) or removed."
+  [{:keys [document base type pointer] :as parity-case}]
+  (if document
+    document
+    (let [doc (read-json (io/file fixtures-dir base (str type ".json")))
+          path (pointer-path doc pointer)]
+      (cond
+        (contains? parity-case :set) (assoc-in doc path (:set parity-case))
+        ;; update-in with an empty path would add a nil key, not dissoc.
+        (= 1 (count path)) (dissoc doc (peek path))
+        :else (update-in doc (pop path) dissoc (peek path))))))
 
 (deftest every-golden-fixture-validates-test
   (is (seq (tenant-dirs)) "no fixtures found; run from bindings/clojure")
@@ -64,3 +99,14 @@
                            (assoc-in snapshot [:evaluations 0 :status] "green")))))
     (testing "a missing signature"
       (is (not (m/validate sut/WorkbenchSnapshot (dissoc snapshot :signature)))))))
+
+(deftest mirror-matches-the-rust-parity-table-test
+  (let [cases (:cases (read-json parity-cases-file))]
+    (is (seq cases) "no parity cases found; run from bindings/clojure")
+    (doseq [{:keys [name type valid] :as parity-case} cases]
+      (testing name
+        (let [schema (get case-schemas type)
+              doc (case-document parity-case)]
+          (is (some? schema) (str "unknown case type " type))
+          (is (= valid (m/validate schema doc))
+              (explain schema doc)))))))
